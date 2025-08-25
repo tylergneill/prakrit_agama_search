@@ -229,7 +229,7 @@
             const term = searchInput.value;
             if (term.length > 2) {
                 const scheme = document.getElementById('transliteration-scheme').value;
-                const normalizedTerm = Sanscript.t(term, scheme, 'iast');
+                const normalizedTerm = Sanscript.t(term, scheme, 'devanagari');
                 const search = await pagefind.search(normalizedTerm);
                 currentResults = search.results;
                 currentPage = 1;
