@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html data-pagefind-ignore>
 <head>
     <meta charset="UTF-8">
-    <title>PDTP Full-Text Search</title>
+    <title>Jain Aagam Online Series Full-Text Search</title>
     
     <style>
         .pagination-controls {
@@ -41,13 +41,11 @@
     </style>
 </head>
 <body>
-    <h1>PDTP Full-Text Search</h1>
+    <h1>Jain Aagam Online Series Full-Text Search</h1>
     <p>
-        <a href="https://github.com/tylergneill/prakrit_texts_search">Repo on GitHub</a>
+        <a href="https://github.com/tylergneill/prakrit_agama_search">Repo on GitHub</a>
         &nbsp;&nbsp; | &nbsp;&nbsp;
-        <a href="https://github.com/aso2101/prakrit_texts">Source repo on GitHub</a>
-        &nbsp;&nbsp; | &nbsp;&nbsp;
-        <a href="./tei_structure.html">File Overview</a>
+        <a href="./file_list.html">File Overview</a>
     </p>
     <div id="search-container">
         <input type="search" id="search-input" placeholder="Search...">
@@ -79,8 +77,8 @@
         let pagefind;
         let currentResults = [];
         let currentPage = 1;
-        let resultsPerPage = 25;
-        
+        let resultsPerPage = 50;
+        let map = {};
 
         const resultsContainer = document.getElementById('results-container');
         const paginationContainer = document.getElementById('pagination-container');
@@ -123,6 +121,23 @@
             "velthuis": "Velthuis"
         };
 
+        function lookup(url) {
+            const u = new URL(url, location.origin);
+            const path  = u.pathname;                  // encoded
+            const name  = path.split("/").pop();       // encoded basename
+            const dpath = decodeURIComponent(path);
+            const dname = decodeURIComponent(name);
+            const urlKey = name.replace(/%20/g, " ");
+            return map[urlKey] ?? map[path] ?? map[dpath] ?? map[name] ?? map[dname] ?? null;
+        }
+
+        function applyTitles(res) {
+            const cleanedTitle = lookup(res.url);
+            if (cleanedTitle) {
+                res.meta.title = cleanedTitle;
+            }
+        }
+
         const populateSchemesDropdown = (showAll) => {
             transliterationScheme.innerHTML = ''; // Clear existing options
 
@@ -156,6 +171,7 @@
 
             paginatedResults.forEach(async (result) => {
                 const data = await result.data();
+                applyTitles(data); 
                 
                 const resultElement = document.createElement('div');
                 resultElement.innerHTML = `<h3><a href="${data.url}">${data.meta.title}</a></h3><p>${data.excerpt}</p>`;
@@ -231,7 +247,7 @@
             const term = searchInput.value;
             if (term.length > 2) {
                 const scheme = document.getElementById('transliteration-scheme').value;
-                const normalizedTerm = Sanscript.t(term, scheme, 'iast');
+                const normalizedTerm = Sanscript.t(term, scheme, 'devanagari');
                 const search = await pagefind.search(normalizedTerm);
                 currentResults = search.results;
                 currentPage = 1;
@@ -249,6 +265,7 @@
         };
 
         window.addEventListener('DOMContentLoaded', async (event) => {
+            map = await fetch("./title_map.json").then(r => r.json()).catch(() => ({}));
             
             pagefind = await import("./pagefind/pagefind.js");
             await pagefind.options({ bundlePath: "./pagefind/" });

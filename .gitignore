@@ -57,6 +57,3 @@ venv*/
 /pagefind
 !docs/pagefind/
 *.tar.gz
-
-# Node.js
-node_modules/
